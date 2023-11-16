@@ -6,21 +6,38 @@
 
 #include <sys/mman.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <stdio.h>
 
-typedef struct jmp_inst{
-    unsigned char op;
-    unsigned char dest[4];
-} jmp_start;
+/*
+This struct represents the memory footprint of a relative jmp instruction inside x86_64
+*/
+typedef struct __rjmp_inst{
+    uint8_t  op[5];
+} __rjmp_inst;
 
+/*
+This define is used to allocate space for assembly function. We allocate nops inside the code;
+5 NOPs cause 5 bytes for relative_jmp.
 
-#define __jmp_inject_target(target_label) target_label: asm("nop \n nop \n nop \n nop \nop") 
+target_l: Label name for where we want the injection to occurr
 
-#define __inject(target_label, destination_label, page_size) do { \
-        unsigned long page_size = getpagesize(); \
-        if(mprotect((void*)(((unsigned long) &&target_label) & ~((page_size)-1)), (page_size), PROT_WRITE | PROT_READ | PROT_EXEC)) { \
-            *((jmp_inst*) &&target_label) = (jmp_inst){.op = 0xE9, .dest = (unsigned char[4])(&&destination_label - &&target_label - sizeof(jmp_inst) - 5)}; \
+*/
+#define __jmp_inject_target(target_l) target_l: __asm__("nop\n\tnop\n\tnop\n\tnop\n\tnop") 
+
+/*
+This instruction performs the actual jump injection. 
+
+target_l: label name for where we want to inject code
+dest_l: label name for the destination of the jump
+page_size: Size of the page
+
+*/
+#define __jmp_inject(target_l, dest_l, page_size) do {\
+        if(!mprotect((void*)(((unsigned long) &&target_l) & ~((page_size)-1)), (page_size), PROT_WRITE|PROT_READ|PROT_EXEC)){\
+            __rjmp_inst jmp = {.op[0] = 0xE9};\
+            *((unsigned int*)(&jmp.op[1])) = (unsigned int) (&&dest_l-&&target_l-sizeof(__rjmp_inst)-5);\
+            *((__rjmp_inst*) &&target_l) = jmp; \
         } \
     } while(0) 
-
-
 #endif

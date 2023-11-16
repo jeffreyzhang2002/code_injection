@@ -1,9 +1,15 @@
 .ONESHELL:
 
 dump:
-	clang main.c -o main.s -s
-	objdump main.s --disassemble > main.dump
+	clang example.c -o example.s -s
+	objdump example.s --disassemble > example.dump
 
 debug:
 	clang main.c -o main -g
 	
+example:
+	clang example.c -o example -g
+
+clean:
+
+	rm example main 

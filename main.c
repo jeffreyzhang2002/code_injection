@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
 
     printf("Starting the for loop\n");
 
-    for(int i = 0; i < 100; ++i) {
+    for(int i = 0; i < 20; ++i) {
 
         printf("Iteration %d \n", i);
 
@@ -32,17 +32,14 @@ int main(int argc, char** argv) {
         if(i == 10) {
 
             unsigned long page_size = getpagesize();
-            unsigned long page = (((unsigned long) &&once_start) & ~(page_size-1));
-            if(!mprotect((void*)page, page_size, PROT_WRITE | PROT_READ | PROT_EXEC)) {
-                printf("mprotect failed!");
+            if(!mprotect((void*)(((unsigned long) &&once_start) & ~(page_size-1)), page_size, PROT_WRITE | PROT_READ | PROT_EXEC)) {
+                jmp j;
+                j.mem[0] = 0xE9;
+                *((unsigned int*)(&j.mem[1])) = (unsigned int) (&&once_end - &&once_start - sizeof(jmp) - 5); //Note sure why we need the 5? but I guess it works
+                *((jmp*) &&once_start) = j;
             }
 
-            jmp j;
-            j.mem[0] = 0xE9;
-            *((unsigned int*)(&j.mem[1])) = (unsigned int) (&&once_end - &&once_start - sizeof(jmp) - 5); //Note sure why we need the 5? but I guess it works
-            *((jmp*) &&once_start) = j;
-        
-   
+            printf("OUT CODE %d", out);   
             printf("Done Performing Code Injection\n");
 
         }
