@@ -34,6 +34,7 @@ dest_l: label name for the destination of the jump
 page_size: Size of the page
 
 */
-#define __jmp_inject(target_l, dest_l, page_size) if(!mprotect((void*)(((unsigned long) &&target_l) & ~((page_size)-1)), (page_size), PROT_WRITE|PROT_READ|PROT_EXEC)){ *((__rjmp_inst*) &&target_l) = (__rjmp_inst){.op=0xE9, .dest=(int32_t)(&&dest_l-&&target_l-sizeof(__rjmp_inst)-5)}; } 
+#define __jmp_inject(target_l, dest_l, page_size) if(!mprotect((void*)(((unsigned long) &&target_l) & ~((page_size)-1)), (page_size), PROT_WRITE|PROT_READ|PROT_EXEC)){ *((__rjmp_inst*) &&target_l) = (__rjmp_inst){.op=0xE9, .dest=(int32_t)(&&dest_l-&&target_l-sizeof(__rjmp_inst))}; } 
    
 #endif
+
