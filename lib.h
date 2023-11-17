@@ -12,8 +12,9 @@
 /*
 This struct represents the memory footprint of a relative jmp instruction inside x86_64
 */
-typedef struct __rjmp_inst{
-    uint8_t  op[5];
+typedef struct __attribute__((__packed__)) __rjmp_inst{
+    uint8_t op;
+    int32_t dest;
 } __rjmp_inst;
 
 /*
@@ -33,11 +34,6 @@ dest_l: label name for the destination of the jump
 page_size: Size of the page
 
 */
-#define __jmp_inject(target_l, dest_l, page_size) do {\
-        if(!mprotect((void*)(((unsigned long) &&target_l) & ~((page_size)-1)), (page_size), PROT_WRITE|PROT_READ|PROT_EXEC)){\
-            __rjmp_inst jmp = {.op[0] = 0xE9};\
-            *((unsigned int*)(&jmp.op[1])) = (unsigned int) (&&dest_l-&&target_l-sizeof(__rjmp_inst)-5);\
-            *((__rjmp_inst*) &&target_l) = jmp; \
-        } \
-    } while(0) 
+#define __jmp_inject(target_l, dest_l, page_size) if(!mprotect((void*)(((unsigned long) &&target_l) & ~((page_size)-1)), (page_size), PROT_WRITE|PROT_READ|PROT_EXEC)){ *((__rjmp_inst*) &&target_l) = (__rjmp_inst){.op=0xE9, .dest=(int32_t)(&&dest_l-&&target_l-sizeof(__rjmp_inst)-5)}; } 
+   
 #endif
